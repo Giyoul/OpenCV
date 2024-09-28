@@ -43,8 +43,10 @@ int main(){
         right_roi = right_roi(right_roi_rect);
         cvtColor(left_roi, left_roi, COLOR_BGR2GRAY);
         cvtColor(right_roi, right_roi, COLOR_BGR2GRAY);
-        GaussianBlur(left_roi, left_roi, Size(5,5), 30, 5, BORDER_DEFAULT);
-        GaussianBlur(right_roi, right_roi, Size(5,5), 5, 5, BORDER_DEFAULT);
+        blur(left_roi, left_roi, Size(5,5));
+        blur(right_roi, right_roi, Size(5,5));
+        // GaussianBlur(left_roi, left_roi, Size(5,5), 30, 5, BORDER_DEFAULT);
+        // GaussianBlur(right_roi, right_roi, Size(5,5), 5, 5, BORDER_DEFAULT);
         Canny(left_roi, left_roi, 10, 60, 3);
         Canny(right_roi, right_roi, 10, 60, 3);
 
