@@ -17,6 +17,9 @@
         "string_view": "cpp",
         "unordered_map": "cpp",
         "vector": "cpp",
-        "iostream": "cpp"
+        "iostream": "cpp",
+        "__node_handle": "cpp",
+        "*.ipp": "cpp",
+        "any": "cpp"
     }
 }
