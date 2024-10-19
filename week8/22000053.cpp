@@ -18,7 +18,7 @@ int main() {
     }
 
     fps = cap.get(CAP_PROP_FPS);
-    delay = 300 / fps; // FPS에 따른 지연 시간
+    delay = 1000 / fps; // FPS에 따른 지연 시간
 
     int currentFrame = 0;
     int displayUntilFrame = -1; // 2초 후 프레임을 저장할 변수
@@ -110,8 +110,8 @@ int main() {
         // 결과 출력
         namedWindow("Foreground Image");
         moveWindow("Foreground Image", 600, 0);
-        imshow("Foreground Image", foregroundImg); // 포그라운드 이미지 출력
-        imshow("Foreground Mask", foregroundMask); // 포그라운드 마스크 출력
+        // imshow("Foreground Image", foregroundImg); // 포그라운드 이미지 출력
+        // imshow("Foreground Mask", foregroundMask); // 포그라운드 마스크 출력
         imshow("Project2", result);  // 최종 결과 화면 출력
         waitKey(delay);
     }
