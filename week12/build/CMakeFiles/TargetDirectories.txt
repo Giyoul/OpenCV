@@ -1,0 +1,3 @@
+/Users/giyoung/Desktop/수업/4학기/computerVision/week12/build/CMakeFiles/run.dir
+/Users/giyoung/Desktop/수업/4학기/computerVision/week12/build/CMakeFiles/edit_cache.dir
+/Users/giyoung/Desktop/수업/4학기/computerVision/week12/build/CMakeFiles/rebuild_cache.dir
