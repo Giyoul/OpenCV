@@ -25,6 +25,7 @@ int main() {
             obj.push_back(Point3f(i * Rect_size, j * Rect_size, 0.0f));
         }
     }
+    
     Mat img, gray;
     cap >> img;
     cout << "Image size: " << img.size() << endl;
