@@ -22,5 +22,6 @@
         "*.ipp": "cpp",
         "any": "cpp",
         "ostream": "cpp"
-    }
+    },
+    "cmake.sourceDirectory": "/Users/giyoung/Desktop/수업/4학기/computerVision/week4"
 }
