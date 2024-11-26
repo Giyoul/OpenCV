@@ -17,14 +17,11 @@ double calculatePSNR(const Mat& original, const Mat& reconstructed) {
 
     if (mse == 0) return INFINITY; // 완벽한 복원일 경우 무한대
 
-    // 8x8 블록의 최대값 찾기
-    double max_I;
-    minMaxLoc(original, nullptr, &max_I); // 최대값을 max_I에 저장
+    double max_I = 255;
 
     double psnr = 20.0 * log10(max_I) - 10.0 * log10(mse); // PSNR 계산
     return psnr;
 }
-
 
 void applyDCTAndQuantization(const Mat& src, const Mat& quantMatrix, Mat& dst) {
     dst = Mat::zeros(src.size(), CV_8UC1); // 출력 이미지 초기화
@@ -42,13 +39,21 @@ void applyDCTAndQuantization(const Mat& src, const Mat& quantMatrix, Mat& dst) {
             Mat quantMatrixFloat;
             quantMatrix.convertTo(quantMatrixFloat, CV_32F);
 
-            // 양자화: dctBlock과 quantMatrixFloat을 나눔
+            // 양자화: dctBlock과 quantMatrixFloat을 나눔 -> 양자화된 값을 반올림하여 손실 적용
             Mat quantized;
-            divide(dctBlock, quantMatrixFloat, quantized, 1, CV_32F); // 결과 타입을 명시적으로 CV_32F로 지정
+            divide(dctBlock, quantMatrixFloat, quantized, 1, CV_32F);
+            quantized = quantized.mul(1.0); // 실수 연산 유지 후 반올림
+            quantized.convertTo(quantized, CV_32S); // 정수화(손실 적용)
+            quantized.convertTo(quantized, CV_32F); // 복원 과정 대비
+
+            // 역 양자화
+            // 이거 때문에 개고생한거 기억하셈. 역 양자화하면, type을 바꾸면서 손실된 값은 안매꿔져서 원본이미지와 차이가 생김.
+            Mat dequantized;
+            multiply(quantized, quantMatrixFloat, dequantized);
 
             // 역 DCT
             Mat inverseDCT;
-            dct(quantized, inverseDCT, 1);
+            dct(dequantized, inverseDCT, DCT_INVERSE);
 
             // 결과 블록을 8U로 변환하여 저장
             Mat resultBlock;
@@ -57,6 +62,7 @@ void applyDCTAndQuantization(const Mat& src, const Mat& quantMatrix, Mat& dst) {
         }
     }
 }
+
 
 
 int main(int argc, char* argv[]) {
@@ -82,7 +88,7 @@ int main(int argc, char* argv[]) {
         49, 64, 78, 87, 103, 121, 120, 101,
         72, 92, 95, 98, 112, 100, 103, 99);
     
-    Mat quantization_mat2 = (Mat_<double>(8, 8) <<
+    Mat quantization_mat2 = (Mat_<float>(8, 8) <<
         1, 1, 1, 1, 1, 1, 1, 1,
         1, 1, 1, 1, 1, 1, 1, 1,
         1, 1, 1, 1, 1, 1, 1, 1,
@@ -92,7 +98,7 @@ int main(int argc, char* argv[]) {
         1, 1, 1, 1, 1, 1, 1, 1,
         1, 1, 1, 1, 1, 1, 1, 1
         );
-    Mat quantization_mat3 = (Mat_<double>(8, 8) <<
+    Mat quantization_mat3 = (Mat_<float>(8, 8) <<
         100, 100, 100, 100, 100, 100, 100, 100,
         100, 100, 100, 100, 100, 100, 100, 100,
         100, 100, 100, 100, 100, 100, 100, 100,
