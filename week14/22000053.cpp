@@ -1,25 +1,60 @@
 #include <opencv2/opencv.hpp>
 #include <iostream>
-#include <cmath>
 
 using namespace cv;
 using namespace std;
 
-// PSNR 계산 함수
 double calculatePSNR(const Mat& original, const Mat& reconstructed) {
     Mat diff;
     absdiff(original, reconstructed, diff); // 차이 계산
-    diff.convertTo(diff, CV_32F); // float로 변환
-    diff = diff.mul(diff); // 제곱
+    diff.convertTo(diff, CV_32F);           // float로 변환
 
-    Scalar s = sum(diff); // 모든 픽셀의 합
-    double mse = s[0] / (double)(original.total()); // 평균 제곱 오차
+    // 차이값을 직접 제곱
+    for (int i = 0; i < diff.rows; i++) {
+        for (int j = 0; j < diff.cols; j++) {
+            diff.at<float>(i, j) = diff.at<float>(i, j) * diff.at<float>(i, j); // 제곱
+        }
+    }
+
+    // 모든 요소의 합 직접 계산
+    double totalSum = 0.0;
+    for (int i = 0; i < diff.rows; i++) {
+        for (int j = 0; j < diff.cols; j++) {
+            totalSum += diff.at<float>(i, j);
+        }
+    }
+
+    double mse = totalSum / (double)(original.total()); // 평균 제곱 오차
 
     if (mse == 0) return INFINITY; // 완벽한 복원일 경우 무한대
 
     double max_I = 255;
 
-    double psnr = 20.0 * log10(max_I) - 10.0 * log10(mse); // PSNR 계산
+    // cmath도 쓰지 말라고 했으니 log10(max_I) 직접 계산하기 위해서는 테일러 급수 써야함.
+    double x = max_I;
+    double ln_x = 0.0;
+    double term = (x - 1) / (x + 1);
+    double term_squared = term * term;
+    for (int i = 1; i < 100; i += 2) {
+        ln_x += (1.0 / i) * term; // 테일러 급수
+        term *= term_squared;     // term^(i+2)
+    }
+    ln_x *= 2;
+    double log10_max_I = ln_x / 2.302585; // ln(10) ≈ 2.302585 근사치를 고정값으로 계산해야 함.
+
+    // 동일하게 테일러 급수 사용해서 log10(mse) 직접 계산
+    x = mse;
+    ln_x = 0.0;
+    term = (x - 1) / (x + 1);
+    term_squared = term * term;
+    for (int i = 1; i < 100; i += 2) {
+        ln_x += (1.0 / i) * term;
+        term *= term_squared;
+    }
+    ln_x *= 2;
+    double log10_mse = ln_x / 2.302585;
+
+    double psnr = 20.0 * log10_max_I - 10.0 * log10_mse; // PSNR 계산
     return psnr;
 }
 
@@ -39,17 +74,28 @@ void applyDCTAndQuantization(const Mat& src, const Mat& quantMatrix, Mat& dst) {
             Mat quantMatrixFloat;
             quantMatrix.convertTo(quantMatrixFloat, CV_32F);
 
-            // 양자화: dctBlock과 quantMatrixFloat을 나눔 -> 양자화된 값을 반올림하여 손실 적용
-            Mat quantized;
-            divide(dctBlock, quantMatrixFloat, quantized, 1, CV_32F);
-            quantized = quantized.mul(1.0); // 실수 연산 유지 후 반올림
-            quantized.convertTo(quantized, CV_32S); // 정수화(손실 적용)
-            quantized.convertTo(quantized, CV_32F); // 복원 과정 대비
+            // 양자화: 직접 나눗셈 연산
+            Mat quantized = dctBlock.clone();
+            for (int i = 0; i < quantized.rows; i++) {
+                for (int j = 0; j < quantized.cols; j++) {
+                    quantized.at<float>(i, j) = dctBlock.at<float>(i, j) / quantMatrixFloat.at<float>(i, j);
+                }
+            }
+
+            // 양자화된 값을 반올림
+            for (int i = 0; i < quantized.rows; i++) {
+                for (int j = 0; j < quantized.cols; j++) {
+                    quantized.at<float>(i, j) = round(quantized.at<float>(i, j));
+                }
+            }
 
             // 역 양자화
-            // 이거 때문에 개고생한거 기억하셈. 역 양자화하면, type을 바꾸면서 손실된 값은 안매꿔져서 원본이미지와 차이가 생김.
-            Mat dequantized;
-            multiply(quantized, quantMatrixFloat, dequantized);
+            Mat dequantized = quantized.clone();
+            for (int i = 0; i < dequantized.rows; i++) {
+                for (int j = 0; j < dequantized.cols; j++) {
+                    dequantized.at<float>(i, j) *= quantMatrixFloat.at<float>(i, j);
+                }
+            }
 
             // 역 DCT
             Mat inverseDCT;
@@ -62,7 +108,6 @@ void applyDCTAndQuantization(const Mat& src, const Mat& quantMatrix, Mat& dst) {
         }
     }
 }
-
 
 
 int main(int argc, char* argv[]) {
