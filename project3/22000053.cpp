@@ -14,13 +14,14 @@ int main() {
     if (img1.empty() || img2.empty() || img3.empty() || img4.empty()) {
         cout << "Error loading images!" << endl;
         return -1;
+
     }
 
-    // 해상도 조정
-    resize(img1, img1, Size(640, 480));
-    resize(img2, img2, Size(640, 480));
-    resize(img3, img3, Size(640, 480));
-    resize(img4, img4, Size(640, 480));
+    // // 해상도 조정
+    resize(img1, img1, Size(1920, 1080));
+    resize(img2, img2, Size(1920, 1080));
+    resize(img3, img3, Size(1920, 1080));
+    resize(img4, img4, Size(1920, 1080));
 
     // ORB와 매칭기 생성
     Ptr<ORB> orb = ORB::create(1000);
@@ -40,7 +41,7 @@ int main() {
 
     for (const auto& nextImg : imageList) {
 
-        cout << "count << " << count << ", canvas.cols << " << canvas.cols << endl; 
+        // cout << "count << " << count << ", canvas.cols << " << canvas.cols << endl; 
 
         // 현재 기준 이미지와 다음 이미지를 비교
         orb->detectAndCompute(canvas, noArray(), keypoints1, descriptors1);
@@ -63,10 +64,7 @@ int main() {
 
         for (int i = 0; i < knnMatches.size(); i++) {
             if (knnMatches.at(i).size() == 2 && knnMatches.at(i).at(0).distance < nndr * knnMatches.at(i).at(1).distance) {
-                // 매칭된 특징점이 canvas의 중간을 기준으로 오른쪽에 있는지 확인
-                if (keypoints1[knnMatches[i][0].queryIdx].pt.x > canvasMiddle) {
-                    goodMatches.push_back(knnMatches[i][0]);
-                }
+                goodMatches.push_back(knnMatches[i][0]);
             }
         }
 
@@ -97,7 +95,7 @@ int main() {
             Point2f(0, canvas.rows) 
         };
 
-        cout << H << endl;
+        // cout << H << endl;
 
         // Homography를 통해 canvasCorners를 warpedImage의 좌표계로 변환
         vector<Point2f> transformedCorners;
@@ -123,26 +121,26 @@ int main() {
 
         float maxX = max((float)canvas.cols, transformedCorners[1].x); // 하단 경계
         // if(count == 1){
-        //     maxX = max((float)canvas.cols, transformedCorners[1].x - canvas.cols -120); // 하단 경계
+        //     maxX = max((float)canvas.cols, transformedCorners[1].x - canvas.cols -360); // 하단 경계
         // } else if (count == 2){
         //     maxX = maxX + 300;
         // }
-        // // if(count == 1){
-        // //     maxX = max((float)canvas.cols, transformedCorners[1].x - canvas.cols); // 하단 경계
-        // // }
+        if(count == 1){
+            maxX = max((float)canvas.cols, transformedCorners[1].x - canvas.cols) / 2 + 1440; // 하단 경계
+        }
         float maxY = max((float)canvas.rows, transformedCorners[1].y); // 하단 경계
 
-        cout << "count << " << count << ", maxX << " << maxX << endl;
+        // cout << "count << " << count << ", maxX << " << maxX << endl;
 
 
         // 필요한 크기로 캔버스를 확장
         Mat tempCanvas = Mat::zeros(Size(canvas.cols * 6, canvas.rows * 6), 16);
 
-        // canvas 복사
-        canvas.copyTo(tempCanvas(Rect(0, 0, canvas.cols, canvas.rows)));
-
         // warpedImage와 canvas 병합
         warpedImage.copyTo(tempCanvas(Rect(0, 0, warpedImage.cols, warpedImage.rows))); // Homography로 이동한 좌표
+
+        // canvas 복사
+        canvas.copyTo(tempCanvas(Rect(0, 0, canvas.cols, canvas.rows)));
 
         canvas = tempCanvas;    // tempCanvas를 canvas로 대체
 
@@ -153,24 +151,12 @@ int main() {
             canvas = canvas(roi);
         }
     
-        cout << "count << " << count << ", canvas.cols << " << canvas.cols << endl;
+        // cout << "count << " << count << ", canvas.cols << " << canvas.cols << endl;
 
         count++;
-
-        imshow("wrapimage", warpedImage);
-        waitKey(1000);
-        destroyAllWindows();
-
-        imshow("tempCanvas", tempCanvas);
-        waitKey(1000);
-        destroyAllWindows();
-
-        imshow("Canvas", canvas);
-        waitKey(1000);
-        destroyAllWindows();
     }
 
-    Rect roi(0, 0, 1700, 720);
+    Rect roi(0, 0, canvas.cols / 4 + 200, canvas.rows / 4 + 200);
     canvas = canvas(roi);
 
     imshow("Panorama", canvas);

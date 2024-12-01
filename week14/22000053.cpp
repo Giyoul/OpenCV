@@ -54,7 +54,7 @@ double calculatePSNR(const Mat& original, const Mat& reconstructed) {
     ln_x *= 2;
     double log10_mse = ln_x / 2.302585;
 
-    double psnr = 20.0 * log10_max_I - 10.0 * log10_mse; // PSNR 계산
+    double psnr = 20.0 * log10_max_I - 10.0 * log10_mse; // PSNR 계산식
     return psnr;
 }
 

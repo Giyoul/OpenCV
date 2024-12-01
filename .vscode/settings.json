@@ -21,7 +21,11 @@
         "__node_handle": "cpp",
         "*.ipp": "cpp",
         "any": "cpp",
-        "ostream": "cpp"
+        "ostream": "cpp",
+        "*.inc": "cpp",
+        "forward_list": "cpp",
+        "unordered_set": "cpp",
+        "valarray": "cpp"
     },
     "cmake.sourceDirectory": "/Users/giyoung/Desktop/수업/4학기/computerVision/week4"
 }
